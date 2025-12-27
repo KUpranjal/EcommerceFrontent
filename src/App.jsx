@@ -1,17 +1,30 @@
-import React from 'react'
-import SignUp from './Components/SignUp'
-import { Toaster } from 'react-hot-toast'
-import { Route, Routes } from 'react-router-dom'
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+
+import SignUp from "./Components/SignUp";
+import SignIn from "./Components/SignIn";
+import Home from "./Components/Home";
+import ProtectedRoutes from "./Components/ProtectedRRoutes";
 
 const App = () => {
   return (
-    <div>
-      <Toaster/>
-      <Routes>
-         <Route path='/signup' element={<SignUp/>} />
-      </Routes>
-    </div>
-  )
-}
+    <>
+      <Toaster />
 
-export default App
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoutes />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+        </Route>
+      </Routes>
+    </>
+  );
+};
+
+export default App;

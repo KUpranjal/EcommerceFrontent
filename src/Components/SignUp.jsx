@@ -1,10 +1,12 @@
 import axios from "axios";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 import validator from "validator";
 const SignUp = () => {
-  // const nav = useNavigate()
+  const nav=useNavigate()
+ 
   const [showPassword, setShowPassword] = useState(false)
 const [form, setForm] = useState({
   firstName: "",
@@ -12,62 +14,68 @@ const [form, setForm] = useState({
   userName: "",
   password: "",
   role: "",
-  mobileNumber: ""
+  mobile: ""
 });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setForm((prev) => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
 
-  const handleChange = (e) => {
-    setForm(prevForm => ({
-      ...prevForm,
-      [e.target.name]: e.target.value
-    }))
+const handleSubmit = () => {
+ // First Name
+if (!form.firstName || form.firstName.length < 2 || form.firstName.length > 8) {
+  toast.error("Firstname must be 2–8 characters");
+  return;
+}
+
+// Last Name
+if (!form.lastName || form.lastName.length < 3 || form.lastName.length > 10) {
+  toast.error("Lastname must be 3–10 characters");
+  return;
+}
+
+// Username
+if (!form.userName || form.userName.length < 3 || form.userName.length > 10) {
+  toast.error("Username must be 3–10 characters");
+  return;
+}
+
+
+  if (!validator.isStrongPassword(form.password)) {
+    toast.error("Please enter a strong password");
+    return;
   }
-  const handleSubmit = () => {
-    if (!form.firstName || form.firstName.length < 2 || form.firstName.length > 15) {
-      toast.error("Firstname should have at least 2 characters");
-      return;
-    }
 
-    if (!form.lastName || form.lastName.length < 3 || form.lastName.length > 15) {
-      toast.error("Lastname should have at least 3 characters");
-      return;
-    }
+  if (!validator.isMobilePhone(form.mobile, "en-IN")) {
+    toast.error("Please enter a valid Indian mobile number");
+    return;
+  }
 
-    if (!form.userName || form.userName.length < 2 || form.userName.length > 15) {
-      toast.error("Username should have at least 2 characters");
-      return;
-    }
+  const userRole = ["buyer", "seller"].includes(form.role)
+    ? form.role
+    : "buyer";
 
-    if (!validator.isStrongPassword(form.password)) {
-      toast.error("Please enter a strong password");
-      return;
-    }
+  axios.post(import.meta.env.VITE_DOMAIN + "/signup", {
+    firstName: form.firstName,
+    lastName: form.lastName,
+    userName: form.userName,
+    password: form.password,
+    role: userRole,
+    mobile: form.mobile
+  })
+  .then(() => {
+    toast.success("User Registered");
+  })
+  .catch((e) => {
+    console.error(e);
+    toast.error("Something went wrong");
+  });
+};
 
-    if (!validator.isMobilePhone(form.mobileNumber)) {
-      toast.error("Please enter a correct phone number");
-      return;
-    }
-
-
-    const userRole = ["buyer", "seller"].includes(form.role)
-      ? form.role
-      : "buyer";
-
-    axios.post(import.meta.env.VITE_DOMAIN + "/signup", {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      username: form.userName,
-      password: form.password,
-      mobileNumber: form.mobileNumber,
-      role: userRole,
-    })
-      .then(() => {
-        toast.success("User Registered");
-      })
-      .catch(() => {
-        toast.error("Something went wrong");
-      });
-  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
 
@@ -154,11 +162,12 @@ const [form, setForm] = useState({
 
           {/* Mobile Number */}
           <input
-          name="mobileNumber"
-            value={form.mobileNumber}
-            onChange={handleChange}
-            type="tel"
-            placeholder="Mobile Number"
+        
+  name="mobile"
+  value={form.mobile}
+  onChange={handleChange}
+  type="tel"
+  placeholder="Mobile Number"
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm
                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                        outline-none transition"
@@ -175,11 +184,12 @@ const [form, setForm] = useState({
                            transition-all duration-200 shadow-md">
           Register
         </button>
-        <p className="text-center mt-4 text-sm">
+       
+       <p className="text-center mt-4 text-sm">
           Already have an account?
           <span
             className="text-blue-600 cursor-pointer ml-1 font-semibold"
-            // onClick={() => nav("/Login")}
+            onClick={() => nav("/SignIn")}
           >
             Login
           </span>
