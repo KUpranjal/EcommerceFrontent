@@ -6,16 +6,20 @@ import SignUp from "./Components/SignUp";
 import SignIn from "./Components/SignIn";
 import Home from "./Components/Home";
 import ProtectedRoutes from "./Components/ProtectedRRoutes";
-import addToCart from "./Components/addToCart";
+import Checkout from "./Components/Checkout";
+
 
 
 
 const App = () => {
-  useEffect(() => {
-  if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark");
-  }
-}, []);
+//   useEffect(() => {
+//   if (localStorage.getItem("theme") === "dark") {
+//     document.documentElement.classList.add("dark");
+//   }
+// }, []);
+
+
+
 
   return (
     <>
@@ -26,11 +30,11 @@ const App = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
 
-        <Route path="/addtocart" element={<addToCart/>} />
 
         <Route element={<ProtectedRoutes />}>
           <Route path="/" element={<Home />} />
           <Route path="/product/:id" element={<Home />} />
+        <Route path="/checkout" element={<Checkout/>} />
 
         </Route>
       </Routes>

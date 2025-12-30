@@ -1,160 +1,183 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 import Loader from "./Loder";
+import { addToCart } from "../Utils/userSlice";
 
 const PRODUCTS_PER_PAGE = 6;
 
 const Home = () => {
-  const [alldata, setAllData] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [qtyMap, setQtyMap] = useState({}); // productId -> quantity
   const [currentPage, setCurrentPage] = useState(1);
+  const dispatch = useDispatch();
 
+  // 🔹 Fetch products
   useEffect(() => {
     axios
       .get(import.meta.env.VITE_DOMAIN + "/product", {
         withCredentials: true,
       })
-      .then((res) => {
-        const products = res.data.data.map((item) => ({
-          ...item,
-          selectedQty: 0,
-        }));
-        setAllData(products);
-      })
-      .catch(console.log);
+      .then((res) => setProducts(res.data.data))
+      .catch(console.error);
   }, []);
 
   // ➕ Increase quantity
   const increaseQty = (id) => {
-    setAllData((prev) =>
-      prev.map((item) =>
-        item._id === id && item.selectedQty < item.quantity
-          ? { ...item, selectedQty: item.selectedQty + 1 }
-          : item
-      )
-    );
+    setQtyMap((prev) => ({
+      ...prev,
+      [id]: (prev[id] || 0) + 1,
+    }));
   };
 
-  // ➖ Decrease quantity
+  // ➖ Decrease quantity (never below 0)
   const decreaseQty = (id) => {
-    setAllData((prev) =>
-      prev.map((item) =>
-        item._id === id && item.selectedQty > 0
-          ? { ...item, selectedQty: item.selectedQty - 1 }
-          : item
-      )
-    );
+    setQtyMap((prev) => ({
+      ...prev,
+      [id]: Math.max((prev[id] || 0) - 1, 0),
+    }));
   };
 
-  if (alldata.length === 0) return <Loader />;
+  // 🛒 Add to cart (API SAFE)
+  const addItem = async (id) => {
+    const q = qtyMap[id] || 0;
 
-  // 🔢 Pagination logic
-  const totalPages = Math.ceil(alldata.length / PRODUCTS_PER_PAGE);
+    // ❌ Prevent invalid API call
+    if (q === 0) {
+      toast.error("Please select quantity");
+      return;
+    }
+
+    try {
+      const res = await axios.patch(
+        import.meta.env.VITE_DOMAIN + "/addproduct",
+        { id, q },
+        { withCredentials: true }
+      );
+
+      dispatch(addToCart(res.data.data));
+      toast.success("Cart updated successfully");
+
+      // Reset quantity after success
+      setQtyMap((prev) => ({ ...prev, [id]: 0 }));
+    } catch {
+      toast.error("Failed to add product");
+    }
+  };
+
+  if (!products.length) return <Loader />;
+
+  // Pagination
+  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
   const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-  const endIndex = startIndex + PRODUCTS_PER_PAGE;
-  const currentProducts = alldata.slice(startIndex, endIndex);
+  const currentProducts = products.slice(
+    startIndex,
+    startIndex + PRODUCTS_PER_PAGE
+  );
 
   return (
-    <div className="min-h-screen bg-[#EEF2F7] px-4 py-10">
-      {/* Products */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-        {currentProducts.map((item) => (
-          <div
-            key={item._id}
-            className="bg-white rounded-3xl shadow-xl overflow-hidden"
-          >
-            <div className="bg-purple-600 text-white text-center py-4 font-semibold">
-              PRODUCT
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 px-6 py-10">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-extrabold text-gray-800">
+          Our Products
+        </h1>
+        <p className="text-gray-500 mt-2">
+          Select quantity and add items to your cart
+        </p>
+      </div>
 
-            <div className="p-6 flex flex-col gap-6">
-              <div className="bg-gray-100 rounded-2xl p-4 flex justify-center">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="h-48 object-contain"
-                />
-              </div>
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        {currentProducts.map((p) => {
+          const qty = qtyMap[p._id] || 0;
 
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">
-                  {item.name}
-                </h1>
+          return (
+            <div
+              key={p._id}
+              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
+            >
+              <img
+                src={p.image}
+                alt={p.name}
+                className="h-48 w-full object-cover"
+              />
 
-                <p className="text-gray-500 text-sm mt-2 line-clamp-3">
-                  {item.desc}
+              <div className="p-5 space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {p.name}
+                </h3>
+
+                <p className="text-sm text-gray-500 line-clamp-2">
+                  {p.desc}
                 </p>
 
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-xl font-bold text-purple-600">
-                    ₹ {item.price}
+                {/* Price + Quantity */}
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-xl font-bold text-green-600">
+                    ₹{p.price}
                   </span>
 
-                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs">
-                    {item.category}
-                  </span>
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => decreaseQty(p._id)}
+                      className="w-8 h-8 rounded-full border border-gray-300
+                      hover:bg-gray-100 text-lg"
+                    >
+                      −
+                    </button>
+
+                    <span className="font-semibold text-gray-700 w-5 text-center">
+                      {qty}
+                    </span>
+
+                    <button
+                      onClick={() => increaseQty(p._id)}
+                      className="w-8 h-8 rounded-full border border-gray-300
+                      hover:bg-gray-100 text-lg"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
 
-                <p className="text-green-600 text-sm mt-1">
-                  In Stock: {item.quantity}
-                </p>
-              </div>
-
-              <div className="flex justify-between items-center border-t pt-4">
-                <div className="flex items-center border rounded-xl overflow-hidden">
-                  <button
-                    disabled={item.selectedQty === 0}
-                    onClick={() => decreaseQty(item._id)}
-                    className="px-3 py-1 bg-gray-100 disabled:bg-gray-200"
-                  >
-                    −
-                  </button>
-
-                  <span className="px-4 font-semibold">
-                    {item.selectedQty}
-                  </span>
-
-                  <button
-                    disabled={item.selectedQty === item.quantity}
-                    onClick={() => increaseQty(item._id)}
-                    className="px-3 py-1 bg-gray-100 disabled:bg-gray-200"
-                  >
-                    +
-                  </button>
-                </div>
-
+                {/* Add to Cart */}
                 <button
-                  disabled={item.selectedQty === 0}
-                  className="bg-orange-500 disabled:bg-gray-300 text-white px-4 py-2 rounded-xl text-sm font-semibold"
+                  onClick={() => addItem(p._id)}
+                  disabled={qty === 0}
+                  className={`mt-4 w-full py-2 rounded-lg font-semibold
+                    transition ${
+                      qty === 0
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
                 >
-                  ADD TO CART
+                  Add to Cart
                 </button>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center gap-4 mt-12">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => p - 1)}
-          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        <span className="font-semibold">
-          Page {currentPage} of {totalPages}
-        </span>
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((p) => p + 1)}
-          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
-        >
-          Next
-        </button>
+      {/* Pagination */}
+      <div className="flex justify-center gap-3 mt-14">
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-4 py-2 rounded-lg font-medium transition
+              ${
+                currentPage === i + 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-white border hover:bg-gray-100"
+              }`}
+          >
+            {i + 1}
+          </button>
+        ))}
       </div>
     </div>
   );

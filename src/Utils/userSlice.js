@@ -4,31 +4,29 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     data: null,
-    loading: true,
-    error: null
+    cart: [],
+    loading: false,
+    error: null,
   },
   reducers: {
     addUser: (state, action) => {
       state.data = action.payload;
       state.loading = false;
     },
+
     logoutUser: (state) => {
       state.data = null;
+      state.cart = [];
       state.loading = false;
       state.error = null;
     },
-     addToCart: (state, action) => {
-      const item = state.items.find(
-        i => i.name === action.payload.name
-      );
-      if (item) {
-        item.quantity += 1;
-      } else {
-        state.items.push({ ...action.payload, quantity: 1 });
-      }
-    }
-  }
+
+    addToCart: (state, action) => {
+      // backend returns full cart
+      state.cart = action.payload;
+    },
+  },
 });
 
-export const { addUser, logoutUser,addToCart } = userSlice.actions;
+export const { addUser, logoutUser, addToCart } = userSlice.actions;
 export default userSlice.reducer;

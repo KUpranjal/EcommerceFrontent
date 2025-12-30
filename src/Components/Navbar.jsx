@@ -7,14 +7,25 @@ import {
   FiMoon,
   FiSun,
 } from "react-icons/fi";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../Utils/userSlice";
 import toast from "react-hot-toast";
 import logo from "../assets/logo.png";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // ✅ Read cart from Redux safely
+  const cartItems = useSelector((state) => state.user.cart || []);
+
+  // ✅ Calculate total quantity
+  const cartCount = cartItems.reduce(
+    (acc, item) => acc + (item.quantity || 0),
+    0
+  );
 
   // 🔁 Load saved theme ONCE
   useEffect(() => {
@@ -24,7 +35,7 @@ const Navbar = () => {
     }
   }, []);
 
-  // 🌙 Toggle theme (SINGLE SOURCE OF TRUTH)
+  // 🌙 Toggle theme
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -41,6 +52,7 @@ const Navbar = () => {
       .then(() => {
         toast.success("Logged out successfully");
         dispatch(logoutUser());
+        navigate("/signin");
       })
       .catch(console.log);
   };
@@ -66,7 +78,7 @@ const Navbar = () => {
           <div className="h-10 w-10 rounded-full overflow-hidden">
             <img
               src={logo}
-              alt="Sublimation Solution Logo"
+              alt="Logo"
               className="h-full w-full object-contain"
             />
           </div>
@@ -89,15 +101,24 @@ const Navbar = () => {
           {/* Actions */}
           <div className="flex items-center gap-6">
 
-            {/* Cart */}
-            <div className="relative cursor-pointer">
+            {/* 🛒 Cart */}
+            <div
+              className="relative cursor-pointer"
+              onClick={() => navigate("/checkout")}
+            >
               <FiShoppingCart className="text-xl text-gray-700 dark:text-gray-200" />
-              <span className="absolute -top-2 -right-3 text-[10px] bg-emerald-500 text-white px-1.5 rounded-full">
-                3
-              </span>
+
+              {/* ✅ Cart Count Badge */}
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-3 text-[10px]
+                  bg-emerald-500 text-white px-1.5 py-0.5
+                  rounded-full min-w-[18px] text-center font-semibold">
+                  {cartCount}
+                </span>
+              )}
             </div>
 
-            {/* 🌙 Dark Mode Toggle */}
+            {/* 🌙 Dark Mode */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full border
