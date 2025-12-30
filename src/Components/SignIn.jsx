@@ -10,8 +10,8 @@ const SignIn = () => {
   const nav = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
-    password: ""
+    username: "pranjalc",
+    password: "Pranjal12@"
   });
 
   const handleChange = (e) => {
@@ -50,75 +50,76 @@ const SignIn = () => {
 
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-        
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
-          Welcome Back
-        </h1>
-        <p className="text-center text-gray-500 mb-8 text-sm">
-          Login to continue
-        </p>
-
-        <div className="space-y-5">
-          {/* Username */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Enter your username"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm
-                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                         outline-none transition"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm
-                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                         outline-none transition"
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          className="w-full mt-8 bg-blue-600 text-white py-3 rounded-lg
-                     font-semibold tracking-wide
-                     hover:bg-blue-700 active:scale-95
-                     transition-all duration-200 shadow-md"
-        >
-          Login
-        </button>
-
-        <p className="text-center mt-4 text-sm text-gray-600">
-          Don't have an account?
-          <span
-            className="text-blue-600 cursor-pointer ml-1 font-semibold"
-            onClick={() => nav("/signup")}
-          >
-            Sign Up
-          </span>
-        </p>
+ return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 via-blue-500 to-indigo-600">
+    
+    <div className="relative w-full max-w-md bg-white/95 backdrop-blur-lg p-10 rounded-3xl shadow-2xl">
+      
+      {/* Email */}
+      <div className="mb-6">
+        <label className="block text-sm text-gray-500 mb-1">
+         UserName
+        </label>
+        <input
+          type="text"
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          placeholder="Enter your username"
+          className="w-full border-b-2 border-gray-300 py-2 text-gray-700
+                     focus:outline-none focus:border-blue-500 transition"
+        />
       </div>
+
+      {/* Password */}
+      <div className="mb-6">
+        <label className="block text-sm text-gray-500 mb-1">
+          Password
+        </label>
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Enter your password"
+          className="w-full border-b-2 border-gray-300 py-2 text-gray-700
+                     focus:outline-none focus:border-blue-500 transition"
+        />
+      </div>
+
+      {/* Remember + Forgot */}
+    
+
+       
+
+      {/* Login Button */}
+    <div className="flex flex-col items-center">
+  <button
+    onClick={handleSubmit}
+    className="w-3/4 bg-blue-900 text-white py-3 rounded-full
+               font-semibold tracking-widest
+               hover:bg-blue-800 active:scale-95
+               transition-all duration-200 shadow-lg"
+  >
+    LOGIN
+  </button>
+
+  <p className="text-center text-sm mt-6 text-gray-600">
+    New User?
+    <span
+      onClick={() => nav("/SignUp")}
+      className="text-blue-600 ml-1 cursor-pointer font-medium"
+    >
+      Sign up
+    </span>
+  </p>
+</div>
+
+
     </div>
-  );
+  </div>
+);
+
 };
 
 export default SignIn;

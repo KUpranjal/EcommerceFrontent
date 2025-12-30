@@ -1,96 +1,162 @@
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../Utils/userSlice";
-import product from "./product";
-import { FaStar, FaShoppingCart } from "react-icons/fa";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import Loader from "./Loder";
+
+const PRODUCTS_PER_PAGE = 6;
 
 const Home = () => {
-  const [products] = useState(product);
-  const dispatch = useDispatch();
+  const [alldata, setAllData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const sent = (item) => {
-    dispatch(addToCart(item));
+  useEffect(() => {
+    axios
+      .get(import.meta.env.VITE_DOMAIN + "/product", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const products = res.data.data.map((item) => ({
+          ...item,
+          selectedQty: 0,
+        }));
+        setAllData(products);
+      })
+      .catch(console.log);
+  }, []);
+
+  // ➕ Increase quantity
+  const increaseQty = (id) => {
+    setAllData((prev) =>
+      prev.map((item) =>
+        item._id === id && item.selectedQty < item.quantity
+          ? { ...item, selectedQty: item.selectedQty + 1 }
+          : item
+      )
+    );
   };
 
-  return (
-    <section className="max-w-7xl mx-auto px-6 py-10">
-      {/* Heading */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-gray-900">
-          Latest Electronics
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Top quality gadgets at best prices
-        </p>
-      </div>
+  // ➖ Decrease quantity
+  const decreaseQty = (id) => {
+    setAllData((prev) =>
+      prev.map((item) =>
+        item._id === id && item.selectedQty > 0
+          ? { ...item, selectedQty: item.selectedQty - 1 }
+          : item
+      )
+    );
+  };
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {products.map((item, index) => (
+  if (alldata.length === 0) return <Loader />;
+
+  // 🔢 Pagination logic
+  const totalPages = Math.ceil(alldata.length / PRODUCTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const endIndex = startIndex + PRODUCTS_PER_PAGE;
+  const currentProducts = alldata.slice(startIndex, endIndex);
+
+  return (
+    <div className="min-h-screen bg-[#EEF2F7] px-4 py-10">
+      {/* Products */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+        {currentProducts.map((item) => (
           <div
-            key={index}
-            className="bg-white border rounded-xl shadow-sm hover:shadow-lg transition flex flex-col h-full"
+            key={item._id}
+            className="bg-white rounded-3xl shadow-xl overflow-hidden"
           >
-            {/* Image */}
-            <div className="bg-gray-50 p-6 flex justify-center">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="h-44 object-contain"
-              />
+            <div className="bg-purple-600 text-white text-center py-4 font-semibold">
+              PRODUCT
             </div>
 
-            {/* Content */}
-            <div className="p-5 flex flex-col h-full">
-              {/* Name */}
-              <h3 className="text-lg font-semibold text-gray-900">
-                {item.name}
-              </h3>
-
-              {/* Category */}
-              <p className="text-xs text-blue-600 uppercase mt-1">
-                {item.category}
-              </p>
-
-              {/* Rating */}
-              <div className="flex items-center gap-1 text-yellow-400 mt-2">
-                <FaStar />
-                <FaStar />
-                <FaStar />
-                <FaStar />
-                <FaStar className="text-gray-300" />
+            <div className="p-6 flex flex-col gap-6">
+              <div className="bg-gray-100 rounded-2xl p-4 flex justify-center">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="h-48 object-contain"
+                />
               </div>
 
-              {/* Description */}
-              <p className="text-sm text-gray-600 mt-3 line-clamp-2">
-                {item.desc}
-              </p>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">
+                  {item.name}
+                </h1>
 
-              {/* Price & Stock */}
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-xl font-bold text-gray-900">
-                  ₹{item.price}
-                </span>
-                <span className="text-xs text-green-600">
+                <p className="text-gray-500 text-sm mt-2 line-clamp-3">
+                  {item.desc}
+                </p>
+
+                <div className="flex justify-between items-center mt-4">
+                  <span className="text-xl font-bold text-purple-600">
+                    ₹ {item.price}
+                  </span>
+
+                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs">
+                    {item.category}
+                  </span>
+                </div>
+
+                <p className="text-green-600 text-sm mt-1">
                   In Stock: {item.quantity}
-                </span>
+                </p>
               </div>
 
-              {/* Add to Cart → FIXED BOTTOM */}
-              <div className="mt-auto pt-4">
+              <div className="flex justify-between items-center border-t pt-4">
+                <div className="flex items-center border rounded-xl overflow-hidden">
+                  <button
+                    disabled={item.selectedQty === 0}
+                    onClick={() => decreaseQty(item._id)}
+                    className="px-3 py-1 bg-gray-100 disabled:bg-gray-200"
+                  >
+                    −
+                  </button>
+
+                  <span className="px-4 font-semibold">
+                    {item.selectedQty}
+                  </span>
+
+                  <button
+                    disabled={item.selectedQty === item.quantity}
+                    onClick={() => increaseQty(item._id)}
+                    className="px-3 py-1 bg-gray-100 disabled:bg-gray-200"
+                  >
+                    +
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => sent(item)}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"
+                  disabled={item.selectedQty === 0}
+                  className="bg-orange-500 disabled:bg-gray-300 text-white px-4 py-2 rounded-xl text-sm font-semibold"
                 >
-                  <FaShoppingCart />
-                  Add to Cart
+                  ADD TO CART
                 </button>
               </div>
             </div>
           </div>
         ))}
       </div>
-    </section>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center gap-4 mt-12">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        <span className="font-semibold">
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   );
 };
 
